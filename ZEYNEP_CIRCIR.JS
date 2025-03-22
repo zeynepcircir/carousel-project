@@ -6,8 +6,9 @@
     const init = async () => {
         if (document.querySelector('.product-detail')) {
             const products = await fetchProducts();
+            const productLength = products.length;
             buildHTML();
-            buildCSS();
+            buildCSS(productLength);
             populateCarousel(products);
             setEvents();
         }
@@ -47,7 +48,9 @@
         document.querySelector(".product-detail").insertAdjacentHTML("afterend", carouselHTML);
     };
 
-    const buildCSS = () => {
+    const buildCSS = (productLength) => {
+        const itemWidth = 100 / productLength;
+        const carouselWidth = (100 / 5.3) * productLength;
         const css = `
             .custom-recommendation-section {
                 background-color: #faf9f7;
@@ -75,23 +78,31 @@
                 padding-bottom: 24px;
             }
             .carousel-parent {
-                touch-action: pan-y pinch-zoom;
                 position: relative;
                 overflow: hidden;
             }
             .carousel-track {
                 display: flex;
                 align-items: stretch;
-                width: 180%;
+                width: ${carouselWidth}%;
                 transform: translateX(0%) translateX(0px);
                 flex-direction: row;
-                gap: 15px;
             }
             .carousel-track::-webkit-scrollbar {
                 display: none;
             }
+            .product-item-container {
+                width: ${itemWidth}%;
+                padding-bottom: unset;
+                height: unset;
+                float: left;
+            }
+            .product-item-limit {
+                width: calc(100% - 10px);
+                height: calc(100% - 10px);
+            }
             .product-item {
-                flex: 0 0 21rem;
+                width: 21rem;
                 height: 38rem;
                 background: white;
                 text-align: center;
@@ -103,17 +114,26 @@
                 text-decoration: none;
                 color: #333;
             }
-            .product-item img {
+            a:hover {
+                text-decoration: none;
+                color: #333;
+            }
+            #productImage {
                 width: 100%;
                 height: 100%;
                 vertical-align: middle;
                 border: 0;
+                overflow-clip-margin: content-box;
+                overflow: clip;
             }
             .image-wrapper {
                 position: relative;
             }
             .product-info {
-                padding: 10px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                padding: 0 10px;
                 font-size: 16px;
                 color: #333;
                 text-align: start;
@@ -171,8 +191,6 @@
             .next {
                 right: -35px;
             }
-
-            
         `;
 
         const styleElement = document.createElement("style");
@@ -184,23 +202,24 @@
         const carousel = document.getElementById("recommended-products");
         products.forEach(product => {
             const productHTML = `
-                <div class="product-item" data-id="${product.id}">
-                    <div class="image-wrapper">
-                        <a href="${product.url}" target="_blank">
-                            <img src="${product.img}" alt="${product.name}" />
-                        </a>
-                    </div>
-                    <div class="product-info">
-                        <a href="${product.url}" target="_blank">
-                            <p>${product.name}</p>
-                        </a>
-                        <span class="price">${product.price} TL</span>
-                    </div>
-                    <div class="heart ${isFavorite(product.id) ? 'active' : ''}" data-product-id="${product.id}">
-                       
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20.576" height="19.483" viewBox="0 0 20.576 19.483"><path fill="none" stroke="#555" stroke-width="1.5px" d="M19.032 7.111c-.278-3.063-2.446-5.285-5.159-5.285a5.128 5.128 0 0 0-4.394 2.532 4.942 4.942 0 0 0-4.288-2.532C2.478 1.826.31 4.048.032 7.111a5.449 5.449 0 0 0 .162 2.008 8.614 8.614 0 0 0 2.639 4.4l6.642 6.031 6.755-6.027a8.615 8.615 0 0 0 2.639-4.4 5.461 5.461 0 0 0 .163-2.012z" transform="translate(.756 -1.076)"></path></svg>
-
-
+                <div class="product-item-container">
+                    <div class="product-item-limit">
+                        <div class="product-item" data-id="${product.id}">
+                            <div class="image-wrapper">
+                                <a href="${product.url}" target="_blank">
+                                    <img id="productImage" src="${product.img}" alt="${product.name}" />
+                                </a>
+                            </div>
+                            <div class="product-info">
+                                <a href="${product.url}" target="_blank">
+                                    <p>${product.name}</p>
+                                </a>
+                                <span class="price">${product.price} TL</span>
+                            </div>
+                            <div class="heart ${isFavorite(product.id) ? 'active' : ''}" data-product-id="${product.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20.576" height="19.483" viewBox="0 0 20.576 19.483"><path fill="none" stroke="#555" stroke-width="1.5px" d="M19.032 7.111c-.278-3.063-2.446-5.285-5.159-5.285a5.128 5.128 0 0 0-4.394 2.532 4.942 4.942 0 0 0-4.288-2.532C2.478 1.826.31 4.048.032 7.111a5.449 5.449 0 0 0 .162 2.008 8.614 8.614 0 0 0 2.639 4.4l6.642 6.031 6.755-6.027a8.615 8.615 0 0 0 2.639-4.4 5.461 5.461 0 0 0 .163-2.012z" transform="translate(.756 -1.076)"></path></svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -209,12 +228,14 @@
     };
 
     const setEvents = () => {
+        const scrollAmount = (window.innerWidth * 0.8) / 5.3;
+
         document.querySelector(".prev").addEventListener("click", () => {
-            document.querySelector(".carousel-parent").scrollBy({ left: -220, behavior: "smooth" });
+            document.querySelector(".carousel-parent").scrollBy({ left: -1 * scrollAmount, behavior: "smooth" });
         });
 
         document.querySelector(".next").addEventListener("click", () => {
-            document.querySelector(".carousel-parent").scrollBy({ left: 220, behavior: "smooth" });
+            document.querySelector(".carousel-parent").scrollBy({ left: scrollAmount, behavior: "smooth" });
         });
 
         document.querySelectorAll(".heart").forEach(heart => {
